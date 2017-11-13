@@ -1,0 +1,68 @@
+from __future__ import print_function
+
+import os
+import subprocess
+
+import pandas as pd
+import numpy as np
+from sklearn.tree import DecisionTreeClassifier
+###
+df=pd.read_csv("https://raw.githubusercontent.com/pydata/pandas/" + \
+             "master/pandas/tests/data/iris.csv")
+df.head()
+df.describe()
+####
+def encode_target(df, target_column):
+    df_mod = df.copy()
+    targets = df_mod[target_column].unique()
+    map_to_int = {name: n for n, name in enumerate(targets)}
+    df_mod["Target"] = df_mod[target_column].replace(map_to_int)
+
+    return (df_mod, targets)
+    
+  df2, targets = encode_target(df, "Name")
+  
+  print("* df2.head()", df2[["Target", "Name"]].head(),
+      sep="\n", end="\n\n")
+print("* df2.tail()", df2[["Target", "Name"]].tail(),
+      sep="\n", end="\n\n")
+print("* targets", targets, sep="\n", end="\n\n")
+
+df2.columns
+del df2["Name"]
+
+features = list(df2.columns[:4])
+print("* features:", features, sep="\n")
+
+Y = df2["Target"]
+X = df2[features]
+
+from sklearn import tree
+from sklearn.tree import DecisionTreeClassifier
+# Building Decision Tree - CART Algorithm (gini criteria)
+dt_train_gini = DecisionTreeClassifier(criterion = "gini", random_state = 100,
+                               max_depth=5, min_samples_leaf=5)
+# Train
+dt_train_gini.fit(X, Y)
+
+def visualize_tree(tree, feature_names):
+    """Create tree png using graphviz.
+
+    Args
+    ----
+    tree -- scikit-learn DecsisionTree.
+    feature_names -- list of feature names.
+    """
+    with open("dt.dot", 'w') as f:
+        export_graphviz(tree, out_file=f,
+                        feature_names=feature_names)
+
+    command = ["dot", "-Tpng", "dt.dot", "-o", "dt.png"]
+    try:
+        subprocess.check_call(command)
+    except:
+        exit("Could not run dot, ie graphviz, to "
+             "produce visualization")
+             
+             from sklearn.tree import export_graphviz
+visualize_tree(dt_train_gini, features)
